@@ -100,14 +100,16 @@ class TestBundle(unittest.TestCase):
         self._hdfs_read_file()
 
     def test_upgrade_again(self):
-        #test_upgrade()
-        pass
+        test_upgrade()
 
     def test_finalize(self):
         pass
 
     def test_third_file_check(self):
         self._hdfs_read_file()
+
+    def test_version_final(self):
+        self.test_hadoop_version
 
 if __name__ == '__main__':
     unittest.main()
