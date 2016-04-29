@@ -53,9 +53,9 @@ class TestBundle(unittest.TestCase):
         self.d.configure('namenode', {'hadoop_version': version})
         self.d.configure('slave', {'hadoop_version': version})
         self.d.configure('resourcemanager', {'hadoop_version': version})
-        id = self.d.action_do(self.hdfs_a, 'hadoop-upgrade', {'version': version, 'prepare': 'true'})
+        id = self.d.action_do('namenode/0', 'hadoop-upgrade', {'version': version, 'prepare': 'true'})
         self.assertEqual({'result': 'Upgrade image prepared - proceed with rolling upgrade'}, self.d.action_fetch(id))
-        id = self.d.action_do(self.hdfs_a, 'hadoop-upgrade', {'version': version, 'query': 'true'})
+        id = self.d.action_do('namenode/0', 'hadoop-upgrade', {'version': version, 'query': 'true'})
         self.assertEqual({'result': 'Upgrade prepared'}, self.d.action_fetch(id))
 
     def test_upgrade(self):
@@ -63,27 +63,34 @@ class TestBundle(unittest.TestCase):
         Test upgrade to 2.7.2
         """
         version = '2.7.2'
-        id = self.d.action_do(self.hdfs_a, 'hadoop-upgrade', {'version': version})
+        #for unit_data in self.d.sentry['namenode']:
+        #unit_names = [i.info['namenode'] for i in self.d.sentry['namenode']]
+        #for unit in self.d.sentry['namenode']:
+        id = self.d.action_do('namenode/0', 'hadoop-upgrade', {'version': version})
         self.assertEqual({'result': 'complete'}, self.d.action_fetch(id))
-        id = self.d.action_do(self.hdfs_b, 'hadoop-upgrade', {'version': version})
+        id = self.d.action_do('namenode/1', 'hadoop-upgrade', {'version': version})
         self.assertEqual({'result': 'complete'}, self.d.action_fetch(id))
 
-        for sentry in self.d.sentry['slave']:
-            id = self.d.action_do(self.d.sentry['slave'][sentry.info['unit']], 'hadoop-upgrade', {'version': version})
-            self.assertEqual({'result': 'complete'}, self.d.action_fetch(id))
+        #for sentry in self.d.sentry['slave']:
+        id = self.d.action_do('slave/0', 'hadoop-upgrade', {'version': version})
+        self.assertEqual({'result': 'complete'}, self.d.action_fetch(id))
+        id = self.d.action_do('slave/1', 'hadoop-upgrade', {'version': version})
+        self.assertEqual({'result': 'complete'}, self.d.action_fetch(id))
+        id = self.d.action_do('slave/2', 'hadoop-upgrade', {'version': version})
+        self.assertEqual({'result': 'complete'}, self.d.action_fetch(id))
 
     def test_first_file_check(self):
         self._hdfs_read_file()
 
     def test_hadoop_version(self):
-        version = '2.7.2'
-        output, retcode = self.hdfs_a.run("su ubuntu -c 'hadoop version|head -n1|awk \'{print $2}\''")
+        version = 'Hadoop 2.7.2'
+        output, retcode = self.hdfs_a.run("su ubuntu -c 'hadoop version|head -n1'")
         self.assertEqual(version, output)
-        output, retcode = self.hdfs_b.run("su ubuntu -c 'hadoop version|head -n1|awk \'{print $2}\''")
+        output, retcode = self.hdfs_b.run("su ubuntu -c 'hadoop version|head -n1'")
         self.assertEqual(version, output)
 
         for sentry in self.d.sentry['slave']:
-            output, retcode = self.d.sentry['slave'][sentry.info['unit']].run("su ubuntu -c 'hadoop version|head -n1|awk \'{print $2}\''")
+            output, retcode = self.d.sentry['slave'][sentry.info['unit']].run("su ubuntu -c 'hadoop version|head -n1'")
             self.assertEqual(version, output)
 
     def test_downgrade(self):
